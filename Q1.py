@@ -66,7 +66,6 @@ def calc_degree(degrees, title=""):
     non_zero_values = values[non_zero_idx]
     log_x = np.log(non_zero_values); log_y = np.log(non_zero_counts)
     z = np.polyfit(log_x, log_y, deg=1)
-    print(z)
     f = np.poly1d(z)
     plt.title('{}degree distribution'.format(title))
     plt.scatter(log_x, log_y)
@@ -102,10 +101,11 @@ def plot_clustering_coeff():
         degrees = A_undirected.sum(axis=1)
 
     A_diag = A_3.diagonal()
+    # pdb.set_trace()
     cs = 2 * A_diag / (degrees * (degrees - 1))
     mask = np.isfinite(cs)
     cs = cs[mask]
-    degrees = degrees[mask]
+    masked_degrees = degrees[mask]
     plt.title('Clustering coefficient distribution')
     plt.hist(cs, log=True, bins=50)
 
@@ -116,7 +116,7 @@ def plot_clustering_coeff():
 
     with open(os.path.join(out_folder, 'avg_clustering_coeff.txt'), "w") as f:
         f.write("Average clustering coefficient: {}".format(np.mean(cs)))
-    return cs, degrees
+    return cs, masked_degrees, degrees
 
 
 def plot_shortest_path_dist():
@@ -198,21 +198,14 @@ def plot_degree_correlation():
     with sns.axes_style("white"):
         ax = sns.heatmap(DC, cmap=sns.cm.rocket_r)
         ax.invert_yaxis()
-    plt.savefig(os.path.join(out_folder, 'eigenvalue distribution distribution'))
+    plt.savefig(os.path.join(out_folder, 'degree correlations distribution'))
     plt.clf()
 
 
 def plot_degree_clustering(cc, degrees):
-    max_degree = int(np.max(np.unique(degrees)))
-    max_cc = int(np.max(np.unique(cc)))
-    DCC = np.zeros((max_degree+1, max_cc+1))
+    # plt.scatter(degrees, cc)
 
-    for i in range(len(degrees)):
-        ki = int(degrees[i])
-        cci = int(cc[i])
-        DCC[ki, cci] += 1
-
-    zipped = list(zip(cc, degrees))
+    zipped = list(zip(degrees, cc))
 
     cnt = Counter(zipped)
     values = cnt.keys()  # equals to list(set(words))
@@ -222,9 +215,10 @@ def plot_degree_clustering(cc, degrees):
 
     plt.title('Degree-clustering coefficient distribution')
     plt.scatter(x, y, s=counts)
-
+    
     plt.xlabel("Degree")
     plt.ylabel("Clustering coefficients")
+
     plt.savefig(os.path.join(out_folder, 'degree clustering coeff distribution'))
     plt.clf()
 
@@ -247,8 +241,8 @@ if __name__ == '__main__':
     if args.a:
         plot_degree_distribution()
     if args.b:
-        cc, degrees = plot_clustering_coeff()
-        plot_degree_clustering(cc, degrees)
+        cc, masked_degrees, degrees = plot_clustering_coeff()
+        plot_degree_clustering(cc, masked_degrees)
     if args.c:
         plot_shortest_path_dist()
     if args.d:
