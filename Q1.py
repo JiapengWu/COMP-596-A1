@@ -125,7 +125,7 @@ def plot_shortest_path_dist():
 
     plt.title('Shortest path lengths distribution')
     unique, counts = np.unique(D.flatten(), return_counts=True)
-    plt.scatter(unique[1:], counts[1:])
+    plt.bar(unique[1:], counts[1:])
     plt.xlabel('Lengths of shorted paths')
     plt.ylabel('Frequency')
     plt.savefig(os.path.join(out_folder, 'Shortest path lengths distribution'))
@@ -144,7 +144,7 @@ def plot_connected_components():
     max_count = np.max(counts)
 
     plt.title('Connected components distribution')
-    plt.scatter(range(1, len(counts) + 1), counts/node_count, s=2)
+    plt.scatter(range(1, len(counts) + 1), counts/node_count)
 
     plt.xlabel("Connected components")
     plt.ylabel("Proportions of nodes in each CC")
@@ -156,16 +156,20 @@ def plot_connected_components():
 
 
 def plot_spectral_gap():
-    D = np.diag(A.sum(axis=1))
+    if directed:
+        D = np.diag(A_undirected.sum(axis=1))
+    else:
+        D = np.diag(A.sum(axis=1))
     L = D - A
-    # eigenvalues and eigenvectors
-    vals, vecs = eigs(csr_matrix(L))
+    vals = np.linalg.eigvals(L)
+    # vals, _ = eigs(L, k=1000)
     vals = vals[np.argsort(vals)]
 
     plt.title('Eigenvalue distribution distribution')
-    plt.scatter(range(1, len(vals) + 1), vals, s=5)
-
-    plt.ylabel('eigenvalue')
+    vals, count = np.unique(vals, return_counts=True)
+    plt.bar(vals, count)
+    plt.ylabel('frequency')
+    plt.xlabel('eigenvalue')
     plt.savefig(os.path.join(out_folder, 'eigenvalue distribution distribution'))
     plt.clf()
 
@@ -215,7 +219,7 @@ def plot_degree_clustering(cc, degrees):
 
     plt.title('Degree-clustering coefficient distribution')
     plt.scatter(x, y, s=counts)
-    
+
     plt.xlabel("Degree")
     plt.ylabel("Clustering coefficients")
 
@@ -227,6 +231,7 @@ if __name__ == '__main__':
     args = get_args()
     fname = os.path.join('networks', args.file)
     directed = args.file in directed_fnames
+
     A, A_sparse, node_count, edge_count = load_data(fname, directed)
     if directed:
         A_undirected = np.maximum(A, A.transpose())
