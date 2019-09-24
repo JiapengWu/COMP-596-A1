@@ -25,15 +25,20 @@ def add_nodes():
     for t in range(1, node_count):
         add_node(t)
 
+
 if __name__ == '__main__':
     args = get_args()
     fname = os.path.join('networks', args.file)
-    out_fname = "{}".format(args.file.split('.')[0])
+    out_fname = args.file.split('.')[0]
+
     directed = args.file in directed_fnames
     A, A_sparse, node_count, edge_count = load_data(fname, directed)
     m = int(edge_count/node_count)
     print(m)
     degrees, A_new = init_graph()
     add_nodes()
+
+    if not os.path.exists('generated'):
+        os.makedirs('generated')
     print("Number of edges: {}".format(sum(degrees)/2))
     np.save(os.path.join('generated', out_fname), A_new)
