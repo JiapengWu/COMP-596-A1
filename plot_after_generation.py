@@ -204,8 +204,20 @@ def plot_degree_correlation():
     with sns.axes_style("white"):
         ax = sns.heatmap(DC, cmap=sns.cm.rocket_r)
         ax.invert_yaxis()
+
     plt.savefig(os.path.join(out_folder, 'degree correlations distribution'))
     plt.clf()
+    
+    DC_marginal = DC.sum(axis=0)
+    DC_marginal_expanded = np.expand_dims(DC_marginal, axis=1)
+    DC_2 = np.dot(DC_marginal_expanded, DC_marginal_expanded.transpose())
+
+    k_arr = np.arange(max_degree + 1)
+    sigma = np.sum(np.multiply(np.square(k_arr), DC_marginal)) - np.square(np.sum(np.multiply(k_arr, DC_marginal)))
+    # sigma = np.var(np.multiply(k_arr, DC_marginal)) * (max_degree + 1)
+    pearson_coeff = np.sum(DC - DC_2) / sigma
+    with open(os.path.join(out_folder, 'overall_degree_coeff.txt'), "w") as f:
+        f.write("Overall degree coefficient: {}".format(pearson_coeff))
 
 
 def plot_degree_clustering(cc, degrees):

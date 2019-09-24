@@ -9,6 +9,7 @@ from scipy.sparse.linalg import eigs
 import seaborn as sns
 directed_fnames = ['metabolic.edgelist.txt', 'citation.edgelist.txt', 'email.edgelist.txt', 'www.edgelist.txt']
 from collections import Counter
+import scipy
 
 
 def get_args():
@@ -207,6 +208,19 @@ def plot_degree_correlation():
         ax = sns.heatmap(DC, cmap=sns.cm.rocket_r)
         ax.invert_yaxis()
     plt.savefig(os.path.join(out_folder, 'degree correlations distribution'))
+    DC_marginal = DC.sum(axis=0)
+    DC_marginal_expanded = np.expand_dims(DC_marginal, axis=1)
+    DC_2 = np.dot(DC_marginal_expanded, DC_marginal_expanded.transpose())
+
+    # overall_coeff = scipy.stats.pearsonr(DC.flatten(), DC_2.flatten())
+
+    # pdb.set_trace()
+    k_arr = np.arange(max_degree + 1)
+    sigma = np.sum(np.multiply(np.square(k_arr), DC_marginal)) - np.square(np.sum(np.multiply(k_arr, DC_marginal)))
+    # sigma = np.var(np.multiply(k_arr, DC_marginal)) * (max_degree + 1)
+    pearson_coeff = np.sum(DC - DC_2) / sigma
+    with open(os.path.join(out_folder, 'overall_degree_coeff.txt'), "w") as f:
+        f.write("Overall degree coefficient: {}".format(pearson_coeff))
     plt.clf()
 
 
