@@ -1,0 +1,1 @@
+Average clustering coefficient: 1.836036696138177e-05

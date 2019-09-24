@@ -1,0 +1,1 @@
+Number of CC's: 567. Proportion of nodes in GCC: 0.9234859291920633.
