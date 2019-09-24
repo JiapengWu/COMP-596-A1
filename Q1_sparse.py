@@ -20,7 +20,7 @@ def get_args():
     parser.add_argument('-d', action="store_true")
     parser.add_argument('-e', action="store_true")
     parser.add_argument('-f', action="store_true")
-    parser.add_argument('--file', type=str, default='protein.edgelist.txt')
+    parser.add_argument('--file', type=str, default='metabolic.edgelist.txt')
     args = parser.parse_args()
     return args
 
@@ -95,10 +95,10 @@ def plot_degree_distribution():
 
 def plot_clustering_coeff():
     if not directed:
-        A_3 = A_sparse.multiply(A_sparse.multiply(A_sparse))
+        A_3 = A_sparse.dot(A_sparse.dot(A_sparse))
         degrees = np.squeeze(np.asarray(A_sparse.sum(axis=1)))
     else:
-        A_3 = A_undirected_sparse.multiply(A_undirected_sparse.multiply(A_undirected_sparse))
+        A_3 = A_undirected_sparse.dot(A_undirected_sparse.dot(A_undirected_sparse))
         degrees = np.squeeze(np.asarray(A_undirected_sparse.sum(axis=1)))
 
     A_diag = A_3.diagonal()
@@ -164,8 +164,8 @@ def plot_spectral_gap():
 
         D = csr_matrix(np.diag(np.squeeze(np.asarray(A_sparse.sum(axis=1)))))
         L = D - A_sparse
-    # vals = np.linalg.eigvals(L)
-    vals, _ = eigs(L, 200)
+    vals = np.linalg.eigvals(L.toarray())
+    # vals, _ = eigs(L, 200)
     vals = vals[np.argsort(vals)]
 
     plt.title('Eigenvalue distribution distribution')
@@ -211,8 +211,6 @@ def plot_degree_correlation():
 
 
 def plot_degree_clustering(cc, degrees):
-    # plt.scatter(degrees, cc)
-
     zipped = list(zip(degrees, cc))
 
     cnt = Counter(zipped)

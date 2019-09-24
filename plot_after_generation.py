@@ -96,11 +96,8 @@ def plot_degree_distribution():
 
 def plot_clustering_coeff():
     if not directed:
-        A_3 = A_sparse.multiply(A_sparse.multiply(A_sparse))
+        A_3 = A_sparse.dot(A_sparse.dot(A_sparse))
         degrees = np.squeeze(np.asarray(A_sparse.sum(axis=1)))
-    else:
-        A_3 = A_undirected_sparse.multiply(A_undirected_sparse.multiply(A_undirected_sparse))
-        degrees = np.squeeze(np.asarray(A_undirected_sparse.sum(axis=1)))
 
     A_diag = A_3.diagonal()
     # pdb.set_trace()
