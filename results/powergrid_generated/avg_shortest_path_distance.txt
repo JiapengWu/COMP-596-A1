@@ -1,0 +1,1 @@
+Average shortest path distance: 5.876847631847339

@@ -1,0 +1,1 @@
+Overall degree coefficient: -1.845808845572536e-20

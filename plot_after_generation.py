@@ -161,8 +161,10 @@ def plot_spectral_gap():
     else:
         D = np.diag(A.sum(axis=1))
     L = D - A
-    vals = np.linalg.eigvals(L)
+    # vals = np.linalg.eigvals(L)
     # vals, _ = eigs(L, k=1000)
+
+    vals, _ = eigs(csr_matrix(L), k=node_count-2)
     vals = vals[np.argsort(vals)]
 
     plt.title('Eigenvalue distribution distribution')
@@ -170,7 +172,7 @@ def plot_spectral_gap():
     plt.bar(vals, count)
     plt.ylabel('frequency')
     plt.xlabel('eigenvalue')
-    plt.savefig(os.path.join(out_folder, 'eigenvalue distribution distribution'))
+    plt.savefig(os.path.join(out_folder, 'eigenvalue distribution'))
     plt.clf()
 
     spectral_gap = vals[vals != 0][0]
@@ -239,7 +241,7 @@ def plot_degree_clustering(cc, degrees):
 
 if __name__ == '__main__':
     args = get_args()
-    fname = os.path.join('generated', "{}.npz".format(args.file.split(".")[0]))
+    fname = os.path.join('generated', "{}_bonus.npz".format(args.file.split(".")[0]))
     directed = False
 
     A_sparse = scipy.sparse.load_npz(fname)
@@ -247,7 +249,7 @@ if __name__ == '__main__':
 
     node_count=A_sparse.shape[0]
 
-    out_folder = os.path.join("results", "{}_generated".format(args.file.split(".")[0]))
+    out_folder = os.path.join("results", "{}_bonus_generated".format(args.file.split(".")[0]))
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
 

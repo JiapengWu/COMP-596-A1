@@ -161,8 +161,8 @@ def plot_spectral_gap():
     else:
         D = np.diag(A.sum(axis=1))
     L = D - A
-    vals = np.linalg.eigvals(L)
-    # vals, _ = eigs(L, k=1000)
+    # vals = np.linalg.eigvals(L)
+    vals, _ = eigs(L, k=node_count-2)
     vals = vals[np.argsort(vals)]
 
     plt.title('Eigenvalue distribution distribution')
