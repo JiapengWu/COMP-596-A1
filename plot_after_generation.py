@@ -11,9 +11,9 @@ directed_fnames = ['metabolic.edgelist.txt', 'citation.edgelist.txt', 'email.edg
 from collections import Counter
 import scipy
 
-
 def get_args():
     parser = ArgumentParser()
+
     parser.add_argument('--all', action="store_true")
     parser.add_argument('-a', action="store_true")
     parser.add_argument('-b', action="store_true")
@@ -39,21 +39,19 @@ def load_data(fname, directed):
             verticies.add(target)
             edges.add((source, target))
 
-    A_sparse = csr_matrix((len(verticies), len(verticies)))
+    A = np.zeros((len(verticies), len(verticies)))
 
     print("Number of verticies: {}".format(len(verticies)))
     print("Number of edges: {}".format(len(edges)))
 
     if directed:
-        A_undirected_sparse = csr_matrix((len(verticies), len(verticies)))
         for i, j in edges:
-            A_sparse[i, j] = 1
-            A_undirected_sparse[j,i] = A_undirected_sparse[i,j]=1
-        return A_sparse, A_undirected_sparse, len(verticies), len(edges)
+            A[i][j] = 1
     else:
         for i, j in edges:
-            A_sparse[j, i] = A_sparse[i, j] = 1
-        return A_sparse, len(verticies), len(edges)
+            A[j][i] = A[i][j] = 1
+
+    return A, csr_matrix(A), len(verticies), len(edges)
 
 
 def calc_degree(degrees, title=""):
@@ -84,11 +82,11 @@ def calc_degree(degrees, title=""):
 
 def plot_degree_distribution():
     if not directed:
-        degrees = np.squeeze(np.asarray(A_sparse.sum(axis=1).astype(int)))
+        degrees = np.sum(A, axis=1).astype(int)
         calc_degree(degrees)
     else:
-        out_degrees = np.squeeze(np.asarray(A_sparse.sum(axis=1).astype(int)))
-        in_degrees = np.squeeze(np.asarray(A_sparse.sum(axis=0).astype(int)))
+        out_degrees = np.sum(A, axis=1).astype(int)
+        in_degrees = np.sum(A, axis=0).astype(int)
 
         calc_degree(out_degrees, "out ")
         calc_degree(in_degrees, "in ")
@@ -96,8 +94,11 @@ def plot_degree_distribution():
 
 def plot_clustering_coeff():
     if not directed:
-        A_3 = A_sparse.dot(A_sparse.dot(A_sparse))
-        degrees = np.squeeze(np.asarray(A_sparse.sum(axis=1)))
+        A_3 = A_sparse.dot(A_sparse.dot(A_sparse)).toarray()
+        degrees = A.sum(axis=1)
+    else:
+        A_3 = A_undirected_sparse.dot(A_undirected_sparse.dot(A_undirected_sparse)).toarray()
+        degrees = A_undirected.sum(axis=1)
 
     A_diag = A_3.diagonal()
     # pdb.set_trace()
@@ -156,14 +157,12 @@ def plot_connected_components():
 
 def plot_spectral_gap():
     if directed:
-        D = csr_matrix(np.diag(np.squeeze(np.asarray(A_undirected_sparse.sum(axis=1)))))
-        L = D - A_undirected_sparse
+        D = np.diag(A_undirected.sum(axis=1))
     else:
-
-        D = csr_matrix(np.diag(np.squeeze(np.asarray(A_sparse.sum(axis=1)))))
-        L = D - A_sparse
-    # vals = np.linalg.eigvals(L)
-    vals, _ = eigs(L, 200)
+        D = np.diag(A.sum(axis=1))
+    L = D - A
+    vals = np.linalg.eigvals(L)
+    # vals, _ = eigs(L, k=1000)
     vals = vals[np.argsort(vals)]
 
     plt.title('Eigenvalue distribution distribution')
@@ -181,19 +180,18 @@ def plot_spectral_gap():
 
 
 def plot_degree_correlation():
-    edge_count = A_sparse.sum()
+    edge_count = A.sum()
     if directed:
-        degrees = np.squeeze(np.asarray(A_undirected_sparse.sum(axis=0).astype(int)))
+        degrees = A_undirected.sum(axis=0).astype(int)
     else:
-        degrees = np.squeeze(np.asarray(A_sparse.sum(axis=0).astype(int)))
+        degrees = A.sum(axis=0).astype(int)
 
     values = np.unique(degrees)
     max_degree = int(np.max(values))
     DC = np.zeros((max_degree+1, max_degree+1))
 
     for i in range(node_count):
-        # pdb.set_trace()
-        N_i = A_sparse[i].nonzero()[1]
+        N_i = A[i].nonzero()[0]
         ki = degrees[i]
         for j in N_i:
             kj = degrees[j]
@@ -204,10 +202,9 @@ def plot_degree_correlation():
     with sns.axes_style("white"):
         ax = sns.heatmap(DC, cmap=sns.cm.rocket_r)
         ax.invert_yaxis()
-
     plt.savefig(os.path.join(out_folder, 'degree correlations distribution'))
     plt.clf()
-    
+
     DC_marginal = DC.sum(axis=0)
     DC_marginal_expanded = np.expand_dims(DC_marginal, axis=1)
     DC_2 = np.dot(DC_marginal_expanded, DC_marginal_expanded.transpose())
@@ -218,7 +215,6 @@ def plot_degree_correlation():
     pearson_coeff = np.sum(DC - DC_2) / sigma
     with open(os.path.join(out_folder, 'overall_degree_coeff.txt'), "w") as f:
         f.write("Overall degree coefficient: {}".format(pearson_coeff))
-
 
 def plot_degree_clustering(cc, degrees):
     # plt.scatter(degrees, cc)
@@ -247,6 +243,7 @@ if __name__ == '__main__':
     directed = False
 
     A_sparse = scipy.sparse.load_npz(fname)
+    A = A_sparse.toarray()
 
     node_count=A_sparse.shape[0]
 
